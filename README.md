@@ -30,10 +30,9 @@ The repo is divided in 3 folder each representing a problem statement of the ass
     make start
 ```
 
-### 3. Send network request from postman
-
-    Send some http request to the blocked port and you will see the logs of the packets being dropped.
-    Try sending request to some other port and obserb that the request was not blocked !
+#### 3. Send network request from postman
+Send some http request to the blocked port and you will see the logs of the packets being dropped.
+Try sending request to some other port and obserb that the request was not blocked !
 
 ## You should be able to see the logs of all the network packet protocol and if the packets where droped 
 
