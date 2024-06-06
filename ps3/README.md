@@ -10,8 +10,6 @@ The channel with fixed lenght is called buffered channel where the sender can ke
 
 Channel can be used to provide synchronization, act as a communication mechanism between goroutine and can provide asynchronous communication when used using buffered channel.
 
-This code snippet can also be used to create a producer/consumer model after some modification. Code in ps3.go file.
-
 **3. What is the significance of the for loop with 4 iterations ?**
 
 The loop with 4 iterations creates 4 goroutine in which each goroutine loop over the cnp channel. All of these goroutines would be in block state as there is no value in the channel but as soon as a function put in the channel one of the gorutine pick it up from the channel and tries to execute it but before it can be executed the main control flow reaches the print "Hello" and exits the program killing all the other goroutines.
