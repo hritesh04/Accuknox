@@ -26,8 +26,11 @@ The repo is divided in 3 folder each representing a problem statement of the ass
 
 #### 2. Run the program
 
+This command can be further configured using port=*value* where port is the port we want blocked
+
 ```sh
     make start
+    make start port=8080
 ```
 
 #### 3. Send network request from postman
