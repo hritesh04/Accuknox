@@ -13,19 +13,14 @@ import (
 	"github.com/cilium/ebpf/rlimit"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang enforcer ../../BPF/drop_packets_xdp.c -- -I/usr/include -O2 -g
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang xdp ../../BPF/drop_packets_xdp.c -- -I/usr/include -O2 -g
 
-type BPFEnforcer struct {
-	obj    enforcerObjects
-	probes map[string]link.Link
+type XDPEnforcer struct {
+	obj  xdpObjects
+	link link.Link
 }
 
-type eventType struct {
-	Type   uint8
-	Action uint8
-}
-
-func (be *BPFEnforcer) Showlogs() {
+func (be *XDPEnforcer) Showlogs() {
 	buffer, err := ringbuf.NewReader(be.obj.Buffer)
 	if err != nil {
 		log.Fatalf("opening ringbuf reader: %s", err)
@@ -53,21 +48,16 @@ func (be *BPFEnforcer) Showlogs() {
 
 }
 
-func NewBPFEnforcer(port []byte) (*BPFEnforcer, error) {
+func NewXDPEnforcer(port []byte) (*XDPEnforcer, error) {
 
 	if err := rlimit.RemoveMemlock(); err != nil {
 		log.Fatal(err)
 	}
 
-	be := new(BPFEnforcer)
-	be.probes = make(map[string]link.Link)
+	be := new(XDPEnforcer)
 
-	if err := loadEnforcerObjects(&be.obj, &ebpf.CollectionOptions{
-		Maps: ebpf.MapOptions{
-			PinPath: "sys/fs/bpf",
-		},
-	}); err != nil {
-		log.Fatalf("error loading BPF LSM objects: %v", err)
+	if err := loadXdpObjects(&be.obj, &ebpf.CollectionOptions{}); err != nil {
+		log.Fatalf("error loading BPF XDP objects: %v", err)
 		return nil, err
 	}
 
@@ -87,9 +77,9 @@ func NewBPFEnforcer(port []byte) (*BPFEnforcer, error) {
 		log.Fatalf("lookup network interface: %v", err)
 	}
 
-	be.probes[be.obj.XdpDropTcpPorts.String()], err = link.AttachXDP(link.XDPOptions{Program: be.obj.XdpDropTcpPorts, Interface: iface.Index})
+	be.link, err = link.AttachXDP(link.XDPOptions{Program: be.obj.XdpDropTcpPorts, Interface: iface.Index})
 	if err != nil {
-		log.Fatalf("opening lsm %s: %s", be.obj.XdpDropTcpPorts.String(), err)
+		log.Fatalf("opening xdp %s: %s", be.obj.XdpDropTcpPorts.String(), err)
 		return nil, err
 	}
 	log.Println("eBPF program loaded and attached.")
@@ -97,24 +87,12 @@ func NewBPFEnforcer(port []byte) (*BPFEnforcer, error) {
 	return be, nil
 }
 
-func getConnectionType(c uint8) string {
-	switch c {
-	case 1:
-		return "TCP"
-	case 2:
-		return "UDP"
-	default:
-		return "UNKNOWN"
+func (be *XDPEnforcer) Stop() error {
+	err := be.link.Close()
+	if err != nil {
+		log.Fatalf("error detaching XDP program: %v", err)
+		return err
 	}
-}
-
-func getActionType(a uint8) string {
-	switch a {
-	case 1:
-		return "PASS"
-	case 2:
-		return "DROP"
-	default:
-		return "INVALID"
-	}
+	log.Println("XDP program detached.")
+	return nil
 }

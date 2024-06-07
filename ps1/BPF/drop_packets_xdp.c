@@ -4,31 +4,7 @@
 #include <linux/tcp.h>
 #include <netinet/in.h>
 #include <bpf/bpf_helpers.h>
-
-#define TYPE_TCP 1
-#define TYPE_UDP 2
-
-#define ACTION_PASS 1
-#define ACTION_DROP 2
-
-struct event {
-    __u8 type;
-    __u8 action;  
-};
-
-
-struct {
-    __uint(type, BPF_MAP_TYPE_RINGBUF);
-    __uint(max_entries, 256*1024);
-} buffer SEC(".maps");
-
-struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, __u64);
-    __type(value, __u64);
-    __uint(max_entries, 1);
-} port_data SEC(".maps");
-
+#include "shared.h"
 
 SEC("xdp")
 int xdp_drop_tcp_ports(struct xdp_md *ctx) {
@@ -74,12 +50,12 @@ int xdp_drop_tcp_ports(struct xdp_md *ctx) {
             e->type=TYPE_TCP;
 
             // initialized default port and a key to lookup associated value from the bfp_hash
-            __u64 port = 4040;
             __u64 key = 0;
-            __u64 *customPort = bpf_map_lookup_elem(&port_data,&key);
+            __u64 port = 4040;
+            __u64 *custom_port = bpf_map_lookup_elem(&port_data,&key);
 
-            if(customPort){
-                port = *customPort;
+            if(custom_port){
+                port = *custom_port;
             }
 
             // drop packets destined for specific TCP ports (default 4040)

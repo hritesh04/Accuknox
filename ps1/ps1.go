@@ -6,23 +6,17 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
-	_ "github.com/cilium/ebpf"
-	"github.com/hritesh04/accuknox/ps1/enforcer/bpflsm"
+	"github.com/hritesh04/accuknox/ps1/enforcer"
 )
 
 func main() {
 
 	portbuf := new(bytes.Buffer)
-	if len(os.Args) < 2 {
-		port := uint64(4040)
-		log.Println("Port not specified")
-		err := binary.Write(portbuf, binary.LittleEndian, port)
-		if err != nil {
-			log.Fatal("buffer error")
-		}
-		log.Println("Blocking the default port 4040")
-	} else {
+	program := "xdp"
+	switch len(os.Args) {
+	case 3:
 		port, err := strconv.ParseUint(os.Args[1], 10, 64)
 		if err != nil {
 			log.Fatalf("error pasrsing args %v", err)
@@ -30,11 +24,30 @@ func main() {
 		if err := binary.Write(portbuf, binary.LittleEndian, port); err != nil {
 			log.Fatal("buffer error")
 		}
+		program = strings.ToLower(os.Args[2])
+		log.Printf("Blocking port %s using %s", os.Args[1], program)
+	case 2:
+		port, err := strconv.ParseUint(os.Args[1], 10, 64)
+		if err != nil {
+			log.Fatalf("error pasrsing args %v", err)
+		}
+		if err := binary.Write(portbuf, binary.LittleEndian, port); err != nil {
+			log.Fatal("buffer error")
+		}
+		log.Printf("Program not specfied blocking port %s using xdp", os.Args[1])
 		log.Printf("Blocking port %s", os.Args[1])
+	default:
+		port := uint64(4040)
+		err := binary.Write(portbuf, binary.LittleEndian, port)
+		if err != nil {
+			log.Fatal("buffer error")
+		}
+		log.Printf("Program and Port not specfied blocking default port 4040 using xdp")
 	}
-	enforcer, err := bpflsm.NewBPFEnforcer(portbuf.Bytes())
+	enforcerIntance, err := enforcer.NewEnforcer(portbuf.Bytes(), program)
 	if err != nil {
 		log.Fatal("error creating enforcer")
 	}
-	enforcer.Showlogs()
+	enforcerIntance.Showlogs()
+
 }

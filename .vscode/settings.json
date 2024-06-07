@@ -5,6 +5,12 @@
         "ip.h": "c",
         "bpf_helpers.h": "c",
         "in.h": "c",
-        "tcp.h": "c"
+        "tcp.h": "c",
+        "net.h": "c",
+        "socket.h": "c",
+        "posix_types.h": "c",
+        "sockios.h": "c",
+        "bpf_core_read.h": "c",
+        "bpf_tracing.h": "c"
     }
 }
