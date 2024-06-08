@@ -32,7 +32,7 @@ int lsm_tcp_drop(struct socket *sock, struct sockaddr *address, int addrlen){
         block_port = *custom_port;
     }
 
-    if (port == block_port) {
+    if (port == htons(block_port)) {
         e->action = ACTION_DROP;
         bpf_ringbuf_submit(e, 0);
         return -EPERM;

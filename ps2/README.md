@@ -7,3 +7,5 @@
     we can have a socket ebpf program which retreives the process name and puts the name into a map.
 
     The value from the map can then be access by a XDP ebpf program which checks for the tcp port and name if both matches then allow the packets to go else drop the packets
+
+    or the lsm/socket_connect hook can have a ebpf which takes out the process name from the process and restict the usage of port accordingly
